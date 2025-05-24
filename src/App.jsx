@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import confetti from "canvas-confetti";
 
 const WORDS = [
@@ -36,13 +36,13 @@ function App() {
   const [roundsPlayed, setRoundsPlayed] = useState(0);
   const [score, setScore] = useState(0);
   const [shakeWrong, setShakeWrong] = useState(false);
+  const inputRef = useRef(null);
 
   const word = wordObj.word;
   const isWinner = word.split("").every((_, i) => revealedIndexes.includes(i));
   const isLoser = wrongGuesses.length >= 6;
   const gameOver = isWinner || isLoser;
 
-  // Confetti on win
   useEffect(() => {
     if (isWinner) {
       confetti({
@@ -53,7 +53,6 @@ function App() {
     }
   }, [isWinner]);
 
-  // Listen for keyboard input
   useEffect(() => {
     if (gameOver) return;
 
@@ -88,6 +87,18 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [word, revealedIndexes, wrongGuesses, gameOver]);
 
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
+  const handleTap = () => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
   const maskedWord = word.split("").map((letter, index) => (
     <span
       key={index}
@@ -107,6 +118,7 @@ function App() {
     setWrongGuesses([]);
     setShowHint(false);
     setMessage("");
+    setTimeout(() => inputRef.current?.focus(), 100);
   };
 
   return (
@@ -234,52 +246,65 @@ function App() {
         }
       `}</style>
 
-      <div className="app" role="main" aria-label="Word Guessing Game">
-        <h1>Word Guessing Game 🎉</h1>
+      <div onClick={handleTap}>
+        <input
+          ref={inputRef}
+          type="text"
+          inputMode="text"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck="false"
+          style={{
+            position: "absolute",
+            opacity: 0,
+            height: 0,
+            width: 0,
+            border: "none",
+            padding: 0,
+          }}
+          aria-hidden="true"
+        />
 
-        <p>Press any letter key to guess:</p>
-        <h2 aria-live="polite" aria-atomic="true" style={{ marginBottom: "1rem" }}>
-          {maskedWord}
-        </h2>
-
-        <p
-          className={`message ${
-            message.includes("Oops") ? "wrong" : message.includes("Good") ? "correct" : ""
-          }`}
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          {message || "Start guessing by pressing a letter key!"}
-        </p>
-
-        <p
-          className={`wrong-guesses ${shakeWrong ? "shake" : ""}`}
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          Wrong guesses: {wrongGuesses.length > 0 ? wrongGuesses.join(", ") : "None"}
-        </p>
-
-        <p>Attempts left: <strong>{6 - wrongGuesses.length}</strong></p>
-
-        {showHint && !gameOver && <p className="hint">💡 Hint: {wordObj.hint}</p>}
-
-        {gameOver && (
-          <>
-            <h3 style={{ color: isWinner ? "#2ecc71" : "#e74c3c" }} aria-live="assertive">
-              {isWinner
-                ? "You won! 🎉"
-                : `You lost! 😢 The word was "${word.toUpperCase()}"`}
-            </h3>
-            <button onClick={resetGame} aria-label="Play again">
-              Play Again
-            </button>
-          </>
-        )}
-
-        <footer>
-          Rounds Played: {roundsPlayed} | Score: {score}
-        </footer>
+        <div className="app" role="main" aria-label="Word Guessing Game">
+          <h1>Word Guessing Game 🎉</h1>
+          <p>Press any letter key to guess:</p>
+          <h2 aria-live="polite" aria-atomic="true" style={{ marginBottom: "1rem" }}>
+            {maskedWord}
+          </h2>
+          <p
+            className={`message ${
+              message.includes("Oops") ? "wrong" : message.includes("Good") ? "correct" : ""
+            }`}
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {message || "Start guessing by pressing a letter key!"}
+          </p>
+          <p
+            className={`wrong-guesses ${shakeWrong ? "shake" : ""}`}
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            Wrong guesses: {wrongGuesses.length > 0 ? wrongGuesses.join(", ") : "None"}
+          </p>
+          <p>Attempts left: <strong>{6 - wrongGuesses.length}</strong></p>
+          {showHint && !gameOver && <p className="hint">💡 Hint: {wordObj.hint}</p>}
+          {gameOver && (
+            <>
+              <h3 style={{ color: isWinner ? "#2ecc71" : "#e74c3c" }} aria-live="assertive">
+                {isWinner
+                  ? "You won! 🎉"
+                  : `You lost! 😢 The word was "${word.toUpperCase()}"`}
+              </h3>
+              <button onClick={resetGame} aria-label="Play again">
+                Play Again
+              </button>
+            </>
+          )}
+          <footer>
+            Rounds Played: {roundsPlayed} | Score: {score}
+          </footer>
+        </div>
       </div>
     </>
   );
